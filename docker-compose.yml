@@ -1,0 +1,24 @@
+version: '0.0.1'
+services:
+  postgre:
+    image: postgres:13
+    ports:
+      - ${DATABASE_PORT}:5432
+    environment:
+      - POSTGRES_USER=${DATABASE_USER}
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_DB=${DATABASE_NAME}
+    volumes:
+      - postgre:/data
+    networks:
+      - backend
+    env_file:
+      - .env
+
+volumes:
+  postgre:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
