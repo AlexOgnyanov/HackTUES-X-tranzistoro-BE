@@ -35,6 +35,7 @@ export class RolesService {
         id,
       },
     });
+
     if (!role) {
       throw new NotFoundException(AuthErrorCodes.RoleNotFoundError);
     }

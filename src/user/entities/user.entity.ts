@@ -6,6 +6,8 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 import { RoleEntity } from 'src/roles/entities';
@@ -15,6 +17,7 @@ import {
   PasswordChangeTokenEntity,
 } from 'src/tokens/entities';
 import { SessionEntity } from 'src/auth/entities';
+import { CompanyEntity } from 'src/companies/entities';
 
 @Entity('user')
 export class UserEntity {
@@ -76,6 +79,10 @@ export class UserEntity {
 
   @ManyToOne(() => RoleEntity, (role) => role.users, { onDelete: 'SET NULL' })
   role: RoleEntity;
+
+  @OneToOne(() => CompanyEntity, (company) => company.owner)
+  @JoinColumn()
+  company: CompanyEntity;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: string;
