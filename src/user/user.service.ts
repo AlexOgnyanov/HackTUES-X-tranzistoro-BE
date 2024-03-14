@@ -8,6 +8,11 @@ import { Repository } from 'typeorm';
 import { AuthErrorCodes } from 'src/auth/errors';
 import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { TokensService } from 'src/tokens/tokens.service';
+import { RolesService } from 'src/roles/roles.service';
+import { PermissionAction, PermissionObject } from 'src/permissions/enums';
+import { RoleEntity } from 'src/roles/entities';
+import { RequiredPermission } from 'src/permissions/types';
+import { RoleErrorCodes } from 'src/roles/errors';
 
 import { CreateUserDto, UpdateUserDto } from './dtos';
 import { UserEntity } from './entities';
@@ -17,9 +22,11 @@ import { UserErrorCodes } from './errors/user-errors.enum';
 export class UserService {
   constructor(
     @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-    private tokensService: TokensService,
-    private sendgridService: SendgridService,
+    private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
+    private readonly tokensService: TokensService,
+    private readonly sendgridService: SendgridService,
   ) {}
 
   async create(dto: CreateUserDto) {
@@ -113,9 +120,17 @@ export class UserService {
 
   async createOwnerUser(contactEmail: string) {
     await this.checkEmailOrFail(contactEmail);
+    const role = await this.findRoleByPermissionsOrFail([
+      PermissionAction.Manage,
+      PermissionObject.Company,
+    ]);
+
     const user = this.userRepository.create({
       email: contactEmail,
       password: null,
+      role: {
+        id: role.id,
+      },
     });
 
     const userEntity = await this.userRepository.save(user);
@@ -126,5 +141,25 @@ export class UserService {
     await this.sendgridService.sendEmailVerification(user.email, token.token);
 
     return userEntity;
+  }
+
+  async findRoleByPermissionsOrFail(permissions: RequiredPermission) {
+    const role = await this.roleRepository.findOne({
+      relations: {
+        permissions: true,
+      },
+      where: {
+        permissions: {
+          action: permissions[0],
+          object: permissions[1],
+        },
+      },
+    });
+
+    if (!role) {
+      throw new NotFoundException(RoleErrorCodes.RoleNotFoundError);
+    }
+
+    return role;
   }
 }
