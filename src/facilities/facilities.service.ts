@@ -2,23 +2,30 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
+import { ConfigService } from '@nestjs/config';
 
 import {
+  AddAttendanceDto,
   CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
-import { DepartmentEntity, FacilityEntity } from './entities';
+import {
+  AttendanceEntity,
+  CameraEntity,
+  DepartmentEntity,
+  FacilityEntity,
+} from './entities';
 import { FacilityErrorCodes } from './errors';
 import { FacilityDepartments, FacilityTags } from './enums';
-import { CameraEntity } from './entities/cameras.entity';
 
 @Injectable()
 export class FacilitiesService {
@@ -29,7 +36,10 @@ export class FacilitiesService {
     private readonly departmentsRepository: Repository<DepartmentEntity>,
     @InjectRepository(CameraEntity)
     private readonly camerasRepository: Repository<CameraEntity>,
+    @InjectRepository(AttendanceEntity)
+    private readonly attendancesRepository: Repository<AttendanceEntity>,
     private readonly filesService: FilesService,
+    private readonly configService: ConfigService,
   ) {}
 
   async create(
@@ -177,14 +187,66 @@ export class FacilitiesService {
     return await this.departmentsRepository.remove(department);
   }
 
+  async findOneCamera(id: number) {
+    return await this.camerasRepository.findOne({
+      relations: {
+        department: true,
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
+  async findOneCameraOrFail(id: number) {
+    const facility = await this.findOneCamera(id);
+
+    if (!facility) {
+      throw new NotFoundException(FacilityErrorCodes.CameraNotFoundError);
+    }
+
+    return facility;
+  }
+
   async createCamera(dto: CreateCameraDto) {
+    if (
+      await this.camerasRepository.findOne({
+        where: {
+          id: dto.cameraId,
+        },
+      })
+    ) {
+      throw new BadRequestException(
+        FacilityErrorCodes.CameraAlreadyExistsError,
+      );
+    }
+
+    const department = await this.findOneDepartmentOrFail(dto.departmentId);
+
     const camera = this.camerasRepository.create({
       id: dto.cameraId,
-      department: {
-        id: dto.departmentId,
-      },
+      department,
     });
 
     return await this.camerasRepository.save(camera);
+  }
+
+  async addAttendance(dto: AddAttendanceDto) {
+    if (dto.apiKey !== this.configService.get<string>('CAMERA_API_KEY')) {
+      throw new UnauthorizedException(FacilityErrorCodes.UnauthorizedError);
+    }
+
+    const camera = await this.camerasRepository.findOneOrFail({
+      where: {
+        id: dto.cameraId,
+      },
+    });
+
+    const attendance = this.attendancesRepository.create({
+      camera,
+      count: dto.count,
+    });
+
+    return await this.attendancesRepository.save(attendance);
   }
 }

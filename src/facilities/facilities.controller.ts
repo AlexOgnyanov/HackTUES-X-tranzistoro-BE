@@ -19,6 +19,7 @@ import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 import { FacilitiesService } from './facilities.service';
 import {
+  AddAttendanceDto,
   CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
@@ -117,5 +118,11 @@ export class FacilitiesController {
   @Post('camera')
   async createCamera(@Body() dto: CreateCameraDto) {
     return await this.facilitiesService.createCamera(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Post('attendance')
+  async addAttendance(@Body() dto: AddAttendanceDto) {
+    return await this.facilitiesService.addAttendance(dto);
   }
 }
