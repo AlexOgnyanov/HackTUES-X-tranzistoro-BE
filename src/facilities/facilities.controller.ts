@@ -22,11 +22,21 @@ import { CreateFacilityDto, UpdateFacilityDto } from './dto';
 
 @ApiBearerAuth('AccessToken')
 @ApiTags('Facilities')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('facilities')
 export class FacilitiesController {
   constructor(private readonly facilitiesService: FacilitiesService) {}
 
+  @Get('tags')
+  async getTags() {
+    return this.facilitiesService.getTags();
+  }
+
+  @Get('departments')
+  async getDepartments() {
+    return this.facilitiesService.getDepartments();
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Create, PermissionObject.Facility])
   @Post()
   @UseInterceptors(
@@ -58,12 +68,14 @@ export class FacilitiesController {
     return await this.facilitiesService.findOne(+id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Update, PermissionObject.Facility])
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateFacilityDto) {
     return await this.facilitiesService.update(+id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Delete, PermissionObject.Facility])
   @Delete(':id')
   async remove(@Param('id') id: string) {

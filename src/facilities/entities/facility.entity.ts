@@ -3,10 +3,14 @@ import {
   Column,
   Entity,
   JoinColumn,
+  ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { CompanyEntity } from 'src/companies/entities';
+
+import { FacilityTags } from '../enums';
 
 @Entity('facility')
 export class FacilityEntity {
@@ -34,6 +38,14 @@ export class FacilityEntity {
   })
   streetName: string;
 
+  @Column({
+    type: 'enum',
+    enum: FacilityTags,
+    array: true,
+    default: [],
+  })
+  tags: FacilityTags[];
+
   @OneToOne(() => FileEntity, (file) => file.thumbnail)
   @JoinColumn()
   thumbnail: FileEntity;
@@ -41,4 +53,7 @@ export class FacilityEntity {
   @OneToMany(() => FileEntity, (file) => file.gallery)
   @JoinColumn()
   gallery: FileEntity[];
+
+  @ManyToOne(() => CompanyEntity, (company) => company.facilities)
+  company: CompanyEntity;
 }

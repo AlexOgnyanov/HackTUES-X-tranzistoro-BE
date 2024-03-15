@@ -1,9 +1,11 @@
+import { FacilityEntity } from 'src/facilities/entities';
 import { FileEntity } from 'src/files/entities';
 import { UserEntity } from 'src/user/entities';
 import {
   Column,
   Entity,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -22,4 +24,8 @@ export class CompanyEntity {
   @OneToOne(() => FileEntity, (file) => file.company)
   @JoinColumn()
   logo: FileEntity;
+
+  @OneToMany(() => FacilityEntity, (facility) => facility.company)
+  @JoinColumn()
+  facilities: FacilityEntity[];
 }

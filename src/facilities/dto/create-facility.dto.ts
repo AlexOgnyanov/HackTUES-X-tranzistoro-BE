@@ -1,5 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+import { FacilityTags } from '../enums';
 
 export class CreateFacilityDto {
   @ApiProperty()
@@ -26,4 +34,9 @@ export class CreateFacilityDto {
   @IsNotEmpty()
   @IsString()
   streetName: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsEnum(FacilityTags, { each: true })
+  tags: FacilityTags[];
 }

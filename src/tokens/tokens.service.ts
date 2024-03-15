@@ -67,7 +67,7 @@ export class TokensService {
   }
 
   async deleteEmailConfirmationToken(token: EmailConfirmationTokenEntity) {
-    return await this.emailConfirmationTokenRepository.delete(token);
+    return await this.emailConfirmationTokenRepository.delete(token.id);
   }
 
   async canUserRequestNewPasswordResetToken(userId: string) {
@@ -134,7 +134,7 @@ export class TokensService {
   }
 
   async deletePasswordResetToken(token: PasswordResetTokenEntity) {
-    return await this.passwordResetTokenRepository.delete(token);
+    return await this.passwordResetTokenRepository.delete(token.id);
   }
 
   async canUserRequestNewPasswordChangeToken(user: UserEntity) {
@@ -200,7 +200,7 @@ export class TokensService {
   }
 
   async deletePasswordChangeToken(token: PasswordChangeTokenEntity) {
-    return await this.passwordChangeTokenRepository.delete(token);
+    return await this.passwordChangeTokenRepository.delete(token.id);
   }
 
   async clearExpiredPasswordResetTokens() {

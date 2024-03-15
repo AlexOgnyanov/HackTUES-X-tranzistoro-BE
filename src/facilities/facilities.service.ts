@@ -11,6 +11,7 @@ import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { CreateFacilityDto, UpdateFacilityDto } from './dto';
 import { FacilityEntity } from './entities';
 import { FacilityErrorCodes } from './errors';
+import { FacilityDepartments, FacilityTags } from './enums';
 
 @Injectable()
 export class FacilitiesService {
@@ -42,15 +43,18 @@ export class FacilitiesService {
     const thumbnail = await this.filesService.uploadFile(files.thumbnail[0]);
     const gallery = await this.filesService.uploadFiles(files.gallery);
 
+    if (typeof dto.tags === 'string') {
+      dto.tags = [dto.tags];
+    }
+
     const facility = this.facilitiesRepository.create({
       ...dto,
       thumbnail,
       gallery,
+      tags: dto.tags,
     });
 
-    const facilityEntity = await this.facilitiesRepository.save(facility);
-
-    return facilityEntity;
+    return await this.facilitiesRepository.save(facility);
   }
 
   async findAll(query: PaginateQuery) {
@@ -103,5 +107,13 @@ export class FacilitiesService {
     this.filesService.deleteFiles(facility.gallery);
 
     return await this.facilitiesRepository.remove(facility);
+  }
+
+  getTags() {
+    return Object.values(FacilityTags);
+  }
+
+  getDepartments() {
+    return Object.values(FacilityDepartments);
   }
 }

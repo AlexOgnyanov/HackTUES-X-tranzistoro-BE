@@ -193,7 +193,7 @@ export class AuthService {
       Date.now() + ms(this.configService.get('JWT_REFRESH_EXPIRES_IN')),
     );
 
-    await this.sessionsRepository.update(session, {
+    await this.sessionsRepository.update(session.id, {
       expiresAt,
       refreshToken: tokens.refreshToken,
     });
@@ -207,7 +207,9 @@ export class AuthService {
 
   async globalLogout(user: UserEntity) {
     await this.sessionsRepository.delete({
-      user: user,
+      user: {
+        id: user.id,
+      },
     });
   }
 }
