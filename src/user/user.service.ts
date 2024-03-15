@@ -8,7 +8,6 @@ import { Repository } from 'typeorm';
 import { AuthErrorCodes } from 'src/auth/errors';
 import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { TokensService } from 'src/tokens/tokens.service';
-import { RolesService } from 'src/roles/roles.service';
 import { PermissionAction, PermissionObject } from 'src/permissions/enums';
 import { RoleEntity } from 'src/roles/entities';
 import { RequiredPermission } from 'src/permissions/types';

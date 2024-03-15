@@ -45,6 +45,16 @@ export class FilesService {
     });
   }
 
+  async uploadFiles(files: Express.Multer.File[]) {
+    const uploadedFiles = await Promise.all(
+      files.map(async (file) => {
+        return await this.uploadFile(file);
+      }),
+    );
+
+    return uploadedFiles;
+  }
+
   async deleteFile(file: FileEntity) {
     await this.fileRepository.delete(file.id);
     const command = new DeleteObjectCommand({
@@ -53,6 +63,16 @@ export class FilesService {
     });
 
     return await this.s3.send(command);
+  }
+
+  async deleteFiles(files: FileEntity[]) {
+    const uploadedFiles = await Promise.all(
+      files.map(async (file) => {
+        return await this.deleteFile(file);
+      }),
+    );
+
+    return uploadedFiles;
   }
 
   async s3Upload(

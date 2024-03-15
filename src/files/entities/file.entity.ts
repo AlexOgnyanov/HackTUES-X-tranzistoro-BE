@@ -1,12 +1,13 @@
 import { CompanyEntity } from 'src/companies/entities';
+import { FacilityEntity } from 'src/facilities/entities';
 import {
   Entity,
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
   Column,
-  ManyToOne,
   OneToOne,
+  ManyToOne,
 } from 'typeorm';
 
 @Entity('file')
@@ -24,6 +25,18 @@ export class FileEntity {
 
   @OneToOne(() => CompanyEntity, (company) => company.logo)
   company: CompanyEntity;
+
+  @OneToOne(() => FacilityEntity, (facility) => facility.thumbnail, {
+    onDelete: 'CASCADE',
+    cascade: true,
+  })
+  thumbnail: FacilityEntity;
+
+  @ManyToOne(() => FacilityEntity, (facility) => facility.thumbnail, {
+    onDelete: 'CASCADE',
+    cascade: true,
+  })
+  gallery: FacilityEntity;
 
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: string;
