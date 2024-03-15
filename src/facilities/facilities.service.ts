@@ -8,8 +8,13 @@ import { Repository } from 'typeorm';
 import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 
-import { CreateFacilityDto, UpdateFacilityDto } from './dto';
-import { FacilityEntity } from './entities';
+import {
+  CreateDepartmentDto,
+  CreateFacilityDto,
+  UpdateDepartmentDto,
+  UpdateFacilityDto,
+} from './dto';
+import { DepartmentEntity, FacilityEntity } from './entities';
 import { FacilityErrorCodes } from './errors';
 import { FacilityDepartments, FacilityTags } from './enums';
 
@@ -18,6 +23,8 @@ export class FacilitiesService {
   constructor(
     @InjectRepository(FacilityEntity)
     private readonly facilitiesRepository: Repository<FacilityEntity>,
+    @InjectRepository(DepartmentEntity)
+    private readonly departmentsRepository: Repository<DepartmentEntity>,
     private readonly filesService: FilesService,
   ) {}
 
@@ -72,6 +79,7 @@ export class FacilitiesService {
       relations: {
         thumbnail: true,
         gallery: true,
+        departments: true,
       },
       where: {
         id,
@@ -115,5 +123,53 @@ export class FacilitiesService {
 
   getDepartments() {
     return Object.values(FacilityDepartments);
+  }
+
+  async findOneDepartment(id: number) {
+    return await this.departmentsRepository.findOne({
+      relations: {
+        facility: true,
+      },
+      where: {
+        id,
+      },
+    });
+  }
+
+  async findOneDepartmentOrFail(id: number) {
+    const facility = await this.findOneDepartment(id);
+
+    if (!facility) {
+      throw new NotFoundException(FacilityErrorCodes.DepartmentNotFoundError);
+    }
+
+    return facility;
+  }
+
+  async createDepartment(dto: CreateDepartmentDto) {
+    const department = this.departmentsRepository.create({
+      name: dto.name,
+      type: dto.type,
+      facility: {
+        id: dto.facilityId,
+      },
+    });
+
+    return await this.departmentsRepository.save(department);
+  }
+
+  async updateDepartment(id: number, dto: UpdateDepartmentDto) {
+    const department = await this.findOneDepartmentOrFail(id);
+
+    return await this.departmentsRepository.save({
+      ...department,
+      ...dto,
+    });
+  }
+
+  async removeDepartment(id: number) {
+    const department = await this.findOneDepartmentOrFail(id);
+
+    return await this.departmentsRepository.remove(department);
   }
 }

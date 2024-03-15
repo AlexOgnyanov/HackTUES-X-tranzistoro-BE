@@ -12,6 +12,8 @@ import { CompanyEntity } from 'src/companies/entities';
 
 import { FacilityTags } from '../enums';
 
+import { DepartmentEntity } from './departments.entity';
+
 @Entity('facility')
 export class FacilityEntity {
   @PrimaryGeneratedColumn()
@@ -54,6 +56,13 @@ export class FacilityEntity {
   @JoinColumn()
   gallery: FileEntity[];
 
-  @ManyToOne(() => CompanyEntity, (company) => company.facilities)
+  @ManyToOne(() => CompanyEntity, (company) => company.facilities, {
+    onDelete: 'CASCADE',
+    cascade: true,
+  })
   company: CompanyEntity;
+
+  @OneToMany(() => DepartmentEntity, (department) => department.facility)
+  @JoinColumn()
+  departments: DepartmentEntity[];
 }

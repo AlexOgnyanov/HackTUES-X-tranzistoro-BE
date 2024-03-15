@@ -18,7 +18,12 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 import { FacilitiesService } from './facilities.service';
-import { CreateFacilityDto, UpdateFacilityDto } from './dto';
+import {
+  CreateDepartmentDto,
+  CreateFacilityDto,
+  UpdateDepartmentDto,
+  UpdateFacilityDto,
+} from './dto';
 
 @ApiBearerAuth('AccessToken')
 @ApiTags('Facilities')
@@ -65,7 +70,7 @@ export class FacilitiesController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    return await this.facilitiesService.findOne(+id);
+    return await this.facilitiesService.findOneOrFail(+id);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -80,5 +85,29 @@ export class FacilitiesController {
   @Delete(':id')
   async remove(@Param('id') id: string) {
     return await this.facilitiesService.remove(+id);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @CheckPermissions([PermissionAction.Create, PermissionObject.Department])
+  @Post('departments')
+  async createDepartment(@Body() dto: CreateDepartmentDto) {
+    return await this.facilitiesService.createDepartment(dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @CheckPermissions([PermissionAction.Update, PermissionObject.Department])
+  @Patch('departments/:id')
+  async updateDepartment(
+    @Param('id') id: string,
+    @Body() dto: UpdateDepartmentDto,
+  ) {
+    return await this.facilitiesService.updateDepartment(+id, dto);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @CheckPermissions([PermissionAction.Delete, PermissionObject.Department])
+  @Delete('departments/:id')
+  async removeDepartment(@Param('id') id: string) {
+    return await this.facilitiesService.removeDepartment(+id);
   }
 }

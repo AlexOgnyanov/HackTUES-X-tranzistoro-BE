@@ -23,7 +23,10 @@ export class FileEntity {
   })
   url: string;
 
-  @OneToOne(() => CompanyEntity, (company) => company.logo)
+  @OneToOne(() => CompanyEntity, (company) => company.logo, {
+    onDelete: 'CASCADE',
+    cascade: true,
+  })
   company: CompanyEntity;
 
   @OneToOne(() => FacilityEntity, (facility) => facility.thumbnail, {
