@@ -18,6 +18,7 @@ import {
   CreateDepartmentDto,
   CreateFacilityDto,
   GetFacilitiesGridDto,
+  GetFacilitiesMapDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -285,6 +286,59 @@ export class FacilitiesService {
       .setParameters({ userLat: dto.userLat, userLon: dto.userLon })
       .offset(offset)
       .limit(dto.limit);
+
+    if (dto?.tags && dto?.tags.length) {
+      query.andWhere('f.tags @> ARRAY[:...tags]::facility_tags_enum[]', {
+        tags: dto.tags,
+      });
+    }
+
+    if (dto?.companyIds && dto?.companyIds.length) {
+      query.andWhere('f.companyId IN (:...companyIds)', {
+        companyIds: dto.companyIds,
+      });
+    }
+
+    if (dto?.departments && dto?.departments.length) {
+      query
+        .andWhere('departments.type IN (:...departments)', {
+          departments: dto.departments,
+        })
+        .groupBy('f.id')
+        .addGroupBy('thumbnail.id')
+        .addGroupBy('departments.id')
+        .addGroupBy('company.id')
+        .having('COUNT(departments.id) = :departmentCount', {
+          departmentCount: dto.departments.length,
+        });
+    }
+
+    return await query.getMany();
+  }
+
+  async getFacilitiesMap(dto: GetFacilitiesMapDto) {
+    if (typeof dto.tags === 'string') {
+      dto.tags = [dto.tags];
+    }
+
+    if (typeof dto.departments === 'string') {
+      dto.departments = [dto.departments];
+    }
+
+    if (typeof dto.companyIds === 'string') {
+      dto.companyIds = [dto.companyIds];
+    }
+
+    const [top, bottom] = [dto.corner1Lat, dto.corner2Lat].sort();
+    const [left, right] = [dto.corner1Lon, dto.corner2Lon].sort();
+
+    const query = this.facilitiesRepository
+      .createQueryBuilder('f')
+      .leftJoinAndSelect('f.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('f.departments', 'departments')
+      .leftJoinAndSelect('f.company', 'company')
+      .andWhere('f.lat BETWEEN :top AND :bottom', { top, bottom })
+      .andWhere('f.lon BETWEEN :left AND :right', { left, right });
 
     if (dto?.tags && dto?.tags.length) {
       query.andWhere('f.tags @> ARRAY[:...tags]::facility_tags_enum[]', {

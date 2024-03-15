@@ -27,6 +27,7 @@ import {
   CreateDepartmentDto,
   CreateFacilityDto,
   GetFacilitiesGridDto,
+  GetFacilitiesMapDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -55,6 +56,11 @@ export class FacilitiesController {
   @Get('grid')
   async getFacilitiesGrid(@Query() dto: GetFacilitiesGridDto) {
     return await this.facilitiesService.getFacilitiesGrid(dto);
+  }
+
+  @Get('map')
+  async getFacilitiesMap(@Query() dto: GetFacilitiesMapDto) {
+    return await this.facilitiesService.getFacilitiesMap(dto);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)

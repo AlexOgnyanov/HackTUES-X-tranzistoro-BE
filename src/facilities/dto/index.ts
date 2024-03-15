@@ -6,3 +6,4 @@ export * from './create-camera.dto';
 export * from './update-camera.dto';
 export * from './attendance.dto';
 export * from './get-facilities-grid.dto';
+export * from './get-facilities-map.dto';
