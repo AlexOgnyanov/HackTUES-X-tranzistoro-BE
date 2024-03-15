@@ -6,10 +6,11 @@ import { FilesModule } from 'src/files/files.module';
 import { FacilitiesService } from './facilities.service';
 import { FacilitiesController } from './facilities.controller';
 import { DepartmentEntity, FacilityEntity } from './entities';
+import { CameraEntity } from './entities/cameras.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([FacilityEntity, DepartmentEntity]),
+    TypeOrmModule.forFeature([FacilityEntity, DepartmentEntity, CameraEntity]),
     PermissionsModule,
     FilesModule,
   ],

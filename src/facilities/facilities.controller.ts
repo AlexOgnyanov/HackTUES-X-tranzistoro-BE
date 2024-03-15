@@ -19,6 +19,7 @@ import { Paginate, PaginateQuery } from 'nestjs-paginate';
 
 import { FacilitiesService } from './facilities.service';
 import {
+  CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
   UpdateDepartmentDto,
@@ -109,5 +110,12 @@ export class FacilitiesController {
   @Delete('departments/:id')
   async removeDepartment(@Param('id') id: string) {
     return await this.facilitiesService.removeDepartment(+id);
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @CheckPermissions([PermissionAction.Create, PermissionObject.Camera])
+  @Post('camera')
+  async createCamera(@Body() dto: CreateCameraDto) {
+    return await this.facilitiesService.createCamera(dto);
   }
 }

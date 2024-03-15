@@ -9,6 +9,7 @@ import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 
 import {
+  CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
   UpdateDepartmentDto,
@@ -17,6 +18,7 @@ import {
 import { DepartmentEntity, FacilityEntity } from './entities';
 import { FacilityErrorCodes } from './errors';
 import { FacilityDepartments, FacilityTags } from './enums';
+import { CameraEntity } from './entities/cameras.entity';
 
 @Injectable()
 export class FacilitiesService {
@@ -25,6 +27,8 @@ export class FacilitiesService {
     private readonly facilitiesRepository: Repository<FacilityEntity>,
     @InjectRepository(DepartmentEntity)
     private readonly departmentsRepository: Repository<DepartmentEntity>,
+    @InjectRepository(CameraEntity)
+    private readonly camerasRepository: Repository<CameraEntity>,
     private readonly filesService: FilesService,
   ) {}
 
@@ -171,5 +175,16 @@ export class FacilitiesService {
     const department = await this.findOneDepartmentOrFail(id);
 
     return await this.departmentsRepository.remove(department);
+  }
+
+  async createCamera(dto: CreateCameraDto) {
+    const camera = this.camerasRepository.create({
+      id: dto.cameraId,
+      department: {
+        id: dto.departmentId,
+      },
+    });
+
+    return await this.camerasRepository.save(camera);
   }
 }

@@ -1,8 +1,15 @@
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 import { FacilityDepartments } from '../enums';
 
 import { FacilityEntity } from './facility.entity';
+import { CameraEntity } from './cameras.entity';
 
 @Entity('department')
 export class DepartmentEntity {
@@ -25,4 +32,7 @@ export class DepartmentEntity {
     cascade: true,
   })
   facility: FacilityEntity;
+
+  @OneToMany(() => CameraEntity, (camera) => camera.department, {})
+  cameras: CameraEntity[];
 }
