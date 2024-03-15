@@ -6,4 +6,6 @@ export enum FacilityErrorCodes {
   CameraAlreadyExistsError = 'CAMERA_ALREADY_EXISTS_ERROR',
   CameraNotFoundError = 'CAMERA_NOT_FOUND_ERROR',
   UnauthorizedError = 'UNAUTHORIZED_ERROR',
+  UserLocationIsRequiredError = 'USER_LOCATION_IS_REQUIRED_ERROR',
+  OnlyCompanyUsersError = 'ONLY_COMPANY_USERS_ERROR',
 }

@@ -92,4 +92,10 @@ export class CompaniesService {
 
     return await this.companiesRepository.save(company);
   }
+
+  async getCompaniesFilterForGrid() {
+    return await this.companiesRepository.find({
+      select: ['id', 'name'],
+    });
+  }
 }

@@ -38,6 +38,7 @@ export class UserService {
   async findOne(id: string, companyId?: number) {
     return this.userRepository.findOne({
       relations: {
+        company: true,
         role: {
           permissions: {
             roles: false,
@@ -63,8 +64,7 @@ export class UserService {
     const query = this.userRepository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.role', 'role')
-      .leftJoinAndSelect('u.company', 'company')
-      .leftJoinAndSelect('u.ownedCompany', 'ownedCompany');
+      .leftJoinAndSelect('u.company', 'company');
 
     return await query.getMany();
   }

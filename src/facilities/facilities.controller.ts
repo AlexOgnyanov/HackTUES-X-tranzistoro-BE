@@ -9,6 +9,8 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Query,
+  Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard, PermissionsGuard } from 'src/auth/guards';
@@ -16,6 +18,7 @@ import { CheckPermissions } from 'src/auth/decorators';
 import { PermissionAction, PermissionObject } from 'src/permissions/enums';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { Paginate, PaginateQuery } from 'nestjs-paginate';
+import { RequestWithUser } from 'src/auth/dtos';
 
 import { FacilitiesService } from './facilities.service';
 import {
@@ -23,6 +26,7 @@ import {
   CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
+  GetFacilitiesGridDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -33,6 +37,11 @@ import {
 export class FacilitiesController {
   constructor(private readonly facilitiesService: FacilitiesService) {}
 
+  @Post('attendance')
+  async addAttendance(@Body() dto: AddAttendanceDto) {
+    return await this.facilitiesService.addAttendance(dto);
+  }
+
   @Get('tags')
   async getTags() {
     return this.facilitiesService.getTags();
@@ -41,6 +50,11 @@ export class FacilitiesController {
   @Get('departments')
   async getDepartments() {
     return this.facilitiesService.getDepartments();
+  }
+
+  @Get('grid')
+  async getFacilitiesGrid(@Query() dto: GetFacilitiesGridDto) {
+    return await this.facilitiesService.getFacilitiesGrid(dto);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -56,13 +70,14 @@ export class FacilitiesController {
   )
   async create(
     @Body() dto: CreateFacilityDto,
+    @Req() req: RequestWithUser,
     @UploadedFiles()
     files?: {
       thumbnail?: Express.Multer.File[];
       gallery?: Express.Multer.File[];
     },
   ) {
-    return await this.facilitiesService.create(dto, files);
+    return await this.facilitiesService.create(req.user, dto, files);
   }
 
   @Get()
@@ -118,11 +133,5 @@ export class FacilitiesController {
   @Post('camera')
   async createCamera(@Body() dto: CreateCameraDto) {
     return await this.facilitiesService.createCamera(dto);
-  }
-
-  @UseGuards(JwtAuthGuard, PermissionsGuard)
-  @Post('attendance')
-  async addAttendance(@Body() dto: AddAttendanceDto) {
-    return await this.facilitiesService.addAttendance(dto);
   }
 }

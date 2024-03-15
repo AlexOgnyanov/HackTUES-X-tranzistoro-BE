@@ -57,13 +57,13 @@ export class AuthService {
       throw new UnauthorizedException(AuthErrorCodes.UserNotFoundError);
     }
 
+    if (!user.isVerified) {
+      throw new ForbiddenException(AuthErrorCodes.AccountNotVerifiedError);
+    }
+
     const isPasswordMatching = await argon2.verify(user.password, password);
     if (!isPasswordMatching) {
       throw new UnauthorizedException(AuthErrorCodes.IncorrectPasswordError);
-    }
-
-    if (!user.isVerified) {
-      throw new ForbiddenException(AuthErrorCodes.AccountNotVerifiedError);
     }
 
     return user;

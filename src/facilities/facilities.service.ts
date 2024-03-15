@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -9,12 +10,14 @@ import { Repository } from 'typeorm';
 import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { ConfigService } from '@nestjs/config';
+import { UserEntity } from 'src/user/entities';
 
 import {
   AddAttendanceDto,
   CreateCameraDto,
   CreateDepartmentDto,
   CreateFacilityDto,
+  GetFacilitiesGridDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -43,12 +46,17 @@ export class FacilitiesService {
   ) {}
 
   async create(
+    user: UserEntity,
     dto: CreateFacilityDto,
     files: {
       thumbnail?: Express.Multer.File[];
       gallery?: Express.Multer.File[];
     },
   ) {
+    if (!user?.company?.id) {
+      throw new ForbiddenException(FacilityErrorCodes.OnlyCompanyUsersError);
+    }
+
     if (files.thumbnail.length > 1 || files.thumbnail.length === 0) {
       throw new BadRequestException(
         FacilityErrorCodes.ExactlyOneThumbnailError,
@@ -73,6 +81,9 @@ export class FacilitiesService {
       thumbnail,
       gallery,
       tags: dto.tags,
+      company: {
+        id: user.company.id,
+      },
     });
 
     return await this.facilitiesRepository.save(facility);
@@ -236,11 +247,7 @@ export class FacilitiesService {
       throw new UnauthorizedException(FacilityErrorCodes.UnauthorizedError);
     }
 
-    const camera = await this.camerasRepository.findOneOrFail({
-      where: {
-        id: dto.cameraId,
-      },
-    });
+    const camera = await this.findOneCameraOrFail(dto.cameraId);
 
     const attendance = this.attendancesRepository.create({
       camera,
@@ -248,5 +255,63 @@ export class FacilitiesService {
     });
 
     return await this.attendancesRepository.save(attendance);
+  }
+
+  async getFacilitiesGrid(dto: GetFacilitiesGridDto) {
+    const offset = (dto.page - 1) * dto.limit;
+
+    if (typeof dto.tags === 'string') {
+      dto.tags = [dto.tags];
+    }
+
+    if (typeof dto.departments === 'string') {
+      dto.departments = [dto.departments];
+    }
+
+    if (typeof dto.companyIds === 'string') {
+      dto.companyIds = [dto.companyIds];
+    }
+
+    const query = this.facilitiesRepository
+      .createQueryBuilder('f')
+      .leftJoinAndSelect('f.thumbnail', 'thumbnail')
+      .leftJoinAndSelect('f.departments', 'departments')
+      .leftJoinAndSelect('f.company', 'company')
+      .addSelect(
+        `(earth_distance(ll_to_earth(f.lat, f.lon), ll_to_earth(:userLat, :userLon)))`,
+        'distance',
+      )
+      .orderBy('distance', 'ASC')
+      .setParameters({ userLat: dto.userLat, userLon: dto.userLon })
+      .offset(offset)
+      .limit(dto.limit);
+
+    if (dto?.tags && dto?.tags.length) {
+      query.andWhere('f.tags @> ARRAY[:...tags]::facility_tags_enum[]', {
+        tags: dto.tags,
+      });
+    }
+
+    if (dto?.companyIds && dto?.companyIds.length) {
+      query.andWhere('f.companyId IN (:...companyIds)', {
+        companyIds: dto.companyIds,
+      });
+    }
+
+    if (dto?.departments && dto?.departments.length) {
+      query
+        .andWhere('departments.type IN (:...departments)', {
+          departments: dto.departments,
+        })
+        .groupBy('f.id')
+        .addGroupBy('thumbnail.id')
+        .addGroupBy('departments.id')
+        .addGroupBy('company.id')
+        .having('COUNT(departments.id) = :departmentCount', {
+          departmentCount: dto.departments.length,
+        });
+    }
+
+    return await query.getMany();
   }
 }

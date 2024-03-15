@@ -26,11 +26,16 @@ import { CreateCompanyDto, UpdateCompanyDto } from './dto';
 
 @ApiBearerAuth('AccessToken')
 @ApiTags('Companies')
-@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
+  @Get('grid')
+  async getCompaniesFilterForGrid() {
+    return await this.companiesService.getCompaniesFilterForGrid();
+  }
+
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Update, PermissionObject.Company])
   @UseInterceptors(
     FileInterceptor('image', { limits: { fileSize: 2 * 1024 * 1024 } }),
@@ -54,6 +59,7 @@ export class CompaniesController {
     return await this.companiesService.changeLogo(req.user, +id, image);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Create, PermissionObject.Company])
   @UseInterceptors(
     FileInterceptor('image', { limits: { fileSize: 2 * 1024 * 1024 } }),
@@ -86,6 +92,7 @@ export class CompaniesController {
     return await this.companiesService.findOneOrFail(+id);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Update, PermissionObject.Company])
   @Patch(':id')
   async update(
@@ -96,6 +103,7 @@ export class CompaniesController {
     return await this.companiesService.update(req.user, +id, dto);
   }
 
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
   @CheckPermissions([PermissionAction.Delete, PermissionObject.Company])
   @Delete(':id')
   async remove(@Param('id') id: string) {
