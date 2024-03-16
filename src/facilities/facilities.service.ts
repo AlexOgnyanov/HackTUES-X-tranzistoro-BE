@@ -11,6 +11,7 @@ import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from 'src/user/entities';
+import { query } from 'express';
 
 import {
   AddAttendanceDto,
@@ -19,6 +20,7 @@ import {
   CreateFacilityDto,
   GetFacilitiesGridDto,
   GetFacilitiesMapDto,
+  GetFacilityHistogramDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -100,23 +102,107 @@ export class FacilitiesService {
     });
   }
 
-  async findOne(id: number) {
-    return await this.facilitiesRepository.findOne({
+  async getLastEntryForCamera(cameraId: number) {
+    return await this.attendancesRepository.findOne({
+      relations: {
+        camera: true,
+      },
+      where: {
+        camera: {
+          id: cameraId,
+        },
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  async findOne(id: number): Promise<FacilityEntity & { attendance?: number }> {
+    const facility = await this.facilitiesRepository.findOne({
       relations: {
         thumbnail: true,
         gallery: true,
-        departments: true,
+        departments: {
+          cameras: true,
+        },
       },
       where: {
         id,
       },
     });
+
+    const lastEntries = [];
+    for (let i = 0; i < facility?.departments.length; i++) {
+      for (let j = 0; j < facility?.departments[i]?.cameras?.length; j++) {
+        lastEntries.push(
+          await this.getLastEntryForCamera(
+            facility.departments[i]?.cameras[j]?.id,
+          ),
+        );
+      }
+    }
+
+    const sum = lastEntries.reduce(
+      (acc, entry) => acc + Number(entry?.count),
+      0,
+    );
+
+    return {
+      ...facility,
+      ...(sum ? { attendance: sum } : {}),
+    };
+  }
+
+  async getEntries(cameraIds: number[]) {
+    const query = this.attendancesRepository
+      .createQueryBuilder('attendance')
+      .where('attendance."cameraId" IN (:...cameraIds)', { cameraIds })
+      .select('attendance."cameraId"', 'cameraId')
+      .addSelect('attendance.count', 'count')
+      .addSelect('EXTRACT(HOUR FROM attendance."createdAt")', 'hour')
+      .addSelect('EXTRACT(DOW FROM attendance."createdAt")', 'day');
+
+    return query.getRawMany();
+  }
+
+  async fetchAggregatedCountsByDayAndHour(
+    facilityId: number,
+    dayOfWeek: number,
+  ) {
+    const facility = await this.findOneOrFail(facilityId);
+
+    const cameraIds = [];
+
+    for (let i = 0; i < facility?.departments?.length; i++) {
+      for (let j = 0; j < facility?.departments[i]?.cameras?.length; j++) {
+        cameraIds.push(facility.departments[i].cameras[j].id);
+      }
+    }
+
+    const entries = await this.getEntries(cameraIds);
+
+    const data = new Array(24).fill(0);
+
+    for (let i = 0; i < data.length; i++) {
+      let sum = 0,
+        len = 0;
+      for (let j = 0; j < entries.length; j++) {
+        if (entries[j].hour == i && entries[j].day == dayOfWeek) {
+          sum += entries[j].count;
+          len++;
+        }
+      }
+      data[i] = Math.round(sum / len) || 0;
+    }
+
+    return data;
   }
 
   async findOneOrFail(id: number) {
     const facility = await this.findOne(id);
 
-    if (!facility) {
+    if (!facility || !facility.id) {
       throw new NotFoundException(FacilityErrorCodes.FacilityNotFoundError);
     }
 
@@ -337,6 +423,7 @@ export class FacilitiesService {
       .leftJoinAndSelect('f.thumbnail', 'thumbnail')
       .leftJoinAndSelect('f.departments', 'departments')
       .leftJoinAndSelect('f.company', 'company')
+      .leftJoinAndSelect('f.gallery', 'gallery')
       .andWhere('f.lat BETWEEN :top AND :bottom', { top, bottom })
       .andWhere('f.lon BETWEEN :left AND :right', { left, right });
 
@@ -361,6 +448,7 @@ export class FacilitiesService {
         .addGroupBy('thumbnail.id')
         .addGroupBy('departments.id')
         .addGroupBy('company.id')
+        .addGroupBy('gallery.id')
         .having('COUNT(departments.id) = :departmentCount', {
           departmentCount: dto.departments.length,
         });

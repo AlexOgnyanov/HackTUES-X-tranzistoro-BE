@@ -28,6 +28,7 @@ import {
   CreateFacilityDto,
   GetFacilitiesGridDto,
   GetFacilitiesMapDto,
+  GetFacilityHistogramDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -61,6 +62,17 @@ export class FacilitiesController {
   @Get('map')
   async getFacilitiesMap(@Query() dto: GetFacilitiesMapDto) {
     return await this.facilitiesService.getFacilitiesMap(dto);
+  }
+
+  @Get('histogram/:id')
+  async getFacilityHistogram(
+    @Param('id') id: string,
+    @Query() dto: GetFacilityHistogramDto,
+  ) {
+    return await this.facilitiesService.fetchAggregatedCountsByDayAndHour(
+      +id,
+      dto.dayOfTheWeek,
+    );
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
