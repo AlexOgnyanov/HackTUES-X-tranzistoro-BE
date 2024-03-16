@@ -4,5 +4,7 @@ export enum PermissionObject {
   Role = 'role',
   Permission = 'permission',
   Company = 'company',
+  Facility = 'facility',
   Department = 'department',
+  Camera = 'camera',
 }

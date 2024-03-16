@@ -57,13 +57,13 @@ export class AuthService {
       throw new UnauthorizedException(AuthErrorCodes.UserNotFoundError);
     }
 
+    if (!user.isVerified) {
+      throw new ForbiddenException(AuthErrorCodes.AccountNotVerifiedError);
+    }
+
     const isPasswordMatching = await argon2.verify(user.password, password);
     if (!isPasswordMatching) {
       throw new UnauthorizedException(AuthErrorCodes.IncorrectPasswordError);
-    }
-
-    if (!user.isVerified) {
-      throw new ForbiddenException(AuthErrorCodes.AccountNotVerifiedError);
     }
 
     return user;
@@ -193,7 +193,7 @@ export class AuthService {
       Date.now() + ms(this.configService.get('JWT_REFRESH_EXPIRES_IN')),
     );
 
-    await this.sessionsRepository.update(session, {
+    await this.sessionsRepository.update(session.id, {
       expiresAt,
       refreshToken: tokens.refreshToken,
     });
@@ -207,7 +207,9 @@ export class AuthService {
 
   async globalLogout(user: UserEntity) {
     await this.sessionsRepository.delete({
-      user: user,
+      user: {
+        id: user.id,
+      },
     });
   }
 }

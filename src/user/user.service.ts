@@ -8,7 +8,6 @@ import { Repository } from 'typeorm';
 import { AuthErrorCodes } from 'src/auth/errors';
 import { SendgridService } from 'src/sendgrid/sendgrid.service';
 import { TokensService } from 'src/tokens/tokens.service';
-import { RolesService } from 'src/roles/roles.service';
 import { PermissionAction, PermissionObject } from 'src/permissions/enums';
 import { RoleEntity } from 'src/roles/entities';
 import { RequiredPermission } from 'src/permissions/types';
@@ -39,6 +38,7 @@ export class UserService {
   async findOne(id: string, companyId?: number) {
     return this.userRepository.findOne({
       relations: {
+        company: true,
         role: {
           permissions: {
             roles: false,
@@ -64,8 +64,7 @@ export class UserService {
     const query = this.userRepository
       .createQueryBuilder('u')
       .leftJoinAndSelect('u.role', 'role')
-      .leftJoinAndSelect('u.company', 'company')
-      .leftJoinAndSelect('u.ownedCompany', 'ownedCompany');
+      .leftJoinAndSelect('u.company', 'company');
 
     return await query.getMany();
   }

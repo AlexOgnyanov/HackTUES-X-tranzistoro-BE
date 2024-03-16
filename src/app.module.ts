@@ -15,6 +15,7 @@ import { TokensModule } from './tokens/tokens.module';
 import { TasksModule } from './tasks/tasks.module';
 import { SendgridModule } from './sendgrid/sendgrid.module';
 import { CompaniesModule } from './companies/companies.module';
+import { FacilitiesModule } from './facilities/facilities.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CompaniesModule } from './companies/companies.module';
     TasksModule,
     SendgridModule,
     CompaniesModule,
+    FacilitiesModule,
   ],
   providers: [
     {
