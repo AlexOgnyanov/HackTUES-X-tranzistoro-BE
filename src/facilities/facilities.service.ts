@@ -11,7 +11,6 @@ import { FilesService } from 'src/files/files.service';
 import { PaginateQuery, paginate } from 'nestjs-paginate';
 import { ConfigService } from '@nestjs/config';
 import { UserEntity } from 'src/user/entities';
-import { query } from 'express';
 
 import {
   AddAttendanceDto,
@@ -20,7 +19,6 @@ import {
   CreateFacilityDto,
   GetFacilitiesGridDto,
   GetFacilitiesMapDto,
-  GetFacilityHistogramDto,
   UpdateDepartmentDto,
   UpdateFacilityDto,
 } from './dto';
@@ -150,7 +148,7 @@ export class FacilitiesService {
 
     return {
       ...facility,
-      ...(sum ? { attendance: sum } : {}),
+      attendance: sum,
     };
   }
 
